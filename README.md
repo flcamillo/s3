@@ -73,7 +73,6 @@ Abaixo seguem exemplos de políticas que podem ser definidas para restringir o a
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "Acesso para listar os objetos no bucket",
             "Effect": "Allow",
             "Action": [
                 "s3:ListBucket"
@@ -81,7 +80,6 @@ Abaixo seguem exemplos de políticas que podem ser definidas para restringir o a
             "Resource": "arn:aws:s3:::MY-BUCKET"
         },
         {
-            "Sid": "Acesso para copiar os objetos do bucket",
             "Effect": "Allow",
             "Action": [
                 "s3:GetObject"

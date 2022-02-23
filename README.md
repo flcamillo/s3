@@ -40,6 +40,16 @@ $ s3 config -vault=https://my-vault-url.com -vaulttoken=TOKEN
 
 O `s3` deverá receber a `role` que será passada para o Vault gerar as credenciais para acessar o bucket.
 
+Abaixo segue um resumo dos passos para o Vault poder gerar as credenciais dinâmicas:
+* Criar um usuário na conta da AWS para o Vault
+* Criar uma política que fornecerá o acesso necessário ao bucket
+* Criar uma função e associar a esta função:
+  * a política criada para acesso ao bucket
+  * a relação de confiança para o usuário do Vault realizar o sts:AssumeRole
+* Configurar a engine `aws` no Vault
+* Configurar na engine `aws` o `ACCESS_KEY` e `SECRET_KEY` do usuário do Vault que foi criado
+* Configurar uma role usando o tipo de credencial `Assumed Role` e informar o `Arn` da função criada na AWS
+**Observação:** o usuário criado para o Vault não precisa ter nenhum acesso associado à ele
 
 ### Configurações gerais
 Para simplificar os parametros para envio e recepção dos arquivos, pode-se definir uma pasta padrão onde estarão os arquivos a serem enviados ou onde deverão ser recebidos os arquivos do bucket.
@@ -55,6 +65,8 @@ $ s3 config -endpoint=https://my-s3-url.com
 ```
 
 ## Bucket Policy
+Abaixo seguem exemplos de políticas que podem ser definidas para restringir o acesso ao bucket.
+
 ### Acesso apenas de leitura
 ```
 {

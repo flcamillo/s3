@@ -35,7 +35,7 @@ $ s3 config -accesskey=ACCESS_KEY -secretkey=SECRET_KEY
 ### Credenciais Dinâmicas
 As credenciais dinâmicas são geradas pelo Vault através da API STS e desta forma será necessário configurar a URL do Vault para gerar as credênciais assim como o token de acesso para executar a API.
 ```
-$ s3 config -vault=https://my-vault-url.com -vaulttoken=TOKEN
+$ s3 config -vault=https://my-vault-url.com -vaulttoken=TOKEN -vaultenginepath=aws
 ```
 
 O `s3` deverá receber a `role` que será passada para o Vault gerar as credenciais para acessar o bucket.

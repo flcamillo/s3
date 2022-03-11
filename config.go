@@ -10,17 +10,18 @@ import (
 // Define todas as configurações que podem ser definidas como padrão,
 // caso não sejam passadas por linha de comando
 type Config struct {
-	Metadata     map[string]string `json:"bucket_metadata,omitempty"`
-	Bucket       string            `json:"bucket_name,omitempty"`
-	Region       string            `json:"bucket_region,omitempty"`
-	PartSize     int               `json:"bucket_part_size,omitempty"`
-	EndPoint     string            `json:"bucket_endpoint_address,omitempty"`
-	AccessKey    string            `json:"bucket_access_key,omitempty"`
-	SecretKey    string            `json:"bucket_secret_key,omitempty"`
-	AccessToken  string            `json:"bucket_token_session,omitempty"`
-	VaultAddress string            `json:"vault_address,omitempty"`
-	VaultToken   string            `json:"vault_token,omitempty"`
-	LocalFolder  string            `json:"local_folder,omitempty"`
+	Metadata        map[string]string `json:"bucket_metadata,omitempty"`
+	Bucket          string            `json:"bucket_name,omitempty"`
+	Region          string            `json:"bucket_region,omitempty"`
+	PartSize        int               `json:"bucket_part_size,omitempty"`
+	EndPoint        string            `json:"bucket_endpoint_address,omitempty"`
+	AccessKey       string            `json:"bucket_access_key,omitempty"`
+	SecretKey       string            `json:"bucket_secret_key,omitempty"`
+	AccessToken     string            `json:"bucket_token_session,omitempty"`
+	VaultAddress    string            `json:"vault_address,omitempty"`
+	VaultToken      string            `json:"vault_token,omitempty"`
+	VaultEnginePath string            `json:"vault_token_engine_pah,omitempty"`
+	LocalFolder     string            `json:"local_folder,omitempty"`
 }
 
 // Retorna a configuração padrão

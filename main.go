@@ -59,6 +59,12 @@ func main() {
 			log.Printf("unable to load configuration file, %s", err)
 		}
 	}
+	// se definido carrega o access key, secret key e access token
+	// das variaveis de ambiente, estes valores são prioridades
+	// ao invés do que esta configurado
+	myConfig.AccessKey = os.Getenv("AWS_ACCESS_KEY_ID")
+	myConfig.SecretKey = os.Getenv("AWS_SECRET_ACCESS_KEY")
+	myConfig.AccessToken = os.Getenv("AWS_SESSION_TOKEN")
 	// identifica a operação
 	switch os.Args[1] {
 	case "get":
@@ -87,10 +93,18 @@ func loadCredentials(role string) error {
 	if role == "" {
 		return fmt.Errorf("vault role not provided")
 	}
+	// valida o caminho da engine, se não foi informado
+	// assume o default
+	if myConfig.VaultEnginePath == "" {
+		myConfig.VaultEnginePath = "aws"
+	} else {
+		myConfig.VaultEnginePath = strings.TrimPrefix(myConfig.VaultEnginePath, "/")
+		myConfig.VaultEnginePath = strings.TrimSuffix(myConfig.VaultEnginePath, "/")
+	}
 	// cria um novo client para o vault
 	vault := NewVault(myConfig.VaultAddress, myConfig.VaultToken)
 	// solicita a credencial ao vault
-	secret, err := vault.Secrets("aws/sts", role, "", "1")
+	secret, err := vault.Secrets(fmt.Sprintf("%s/%s", myConfig.VaultEnginePath, "sts"), role, "", "1")
 	if err != nil {
 		return err
 	}
@@ -116,6 +130,7 @@ func processConfig(args []string) {
 	pAccessToken := cmdConfig.String("accesstoken", "", "token session")
 	pVaultAddress := cmdConfig.String("vault", "", "url of vault api (sintax https://my-vault-url.com)")
 	pVaultToken := cmdConfig.String("vaulttoken", "", "vault token access")
+	pVaultEnginePath := cmdConfig.String("vaultenginepath", "aws", "vault engine path to ask for credentials")
 	pFolder := cmdConfig.String("folder", "", "folder of files")
 	pFile := cmdConfig.String("out", "", "output file to save configuration")
 	// processa os parametros
@@ -179,6 +194,10 @@ func processConfig(args []string) {
 	// configura a pasta padrão onde estão ou serão gravados os arquivos
 	if *pFolder != "" {
 		myConfig.LocalFolder = *pFolder
+	}
+	// configura o caminho da engine para solicitar credenciais
+	if *pVaultEnginePath != "" {
+		myConfig.VaultEnginePath = *pVaultEnginePath
 	}
 	// identifica onde deve ser salva as configurações
 	if *pFile == "" {
@@ -277,10 +296,6 @@ func processGet(args []string) {
 	// valida o rename
 	if *pRename == "" {
 		*pRename = "${name}${ext}"
-	}
-	// valida a role para acesso ao bucket
-	if *pRole == "" {
-		log.Fatalf("bucket role name not provided")
 	}
 	// ajusta o prefixo do bucket (sub pasta)
 	if *pBucketPrefix != "" {
@@ -396,10 +411,6 @@ func processPut(args []string) {
 	if *pRename == "" {
 		*pRename = "${name}${ext}"
 	}
-	// valida a role para acesso ao bucket
-	if *pRole == "" {
-		log.Fatalf("bucket role name not provided")
-	}
 	// ajusta o prefixo do bucket (sub pasta)
 	if *pBucketPrefix != "" {
 		*pBucketPrefix = strings.TrimPrefix(*pBucketPrefix, "/")
@@ -456,7 +467,6 @@ func configureAWSClient() (err error) {
 	// define o resolver para o endpoint da aws
 	customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 		if myConfig.EndPoint != "" {
-			log.Printf("using custom endpoint {%s}", myConfig.EndPoint)
 			return aws.Endpoint{
 				PartitionID:       "aws",
 				URL:               myConfig.EndPoint,

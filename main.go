@@ -85,10 +85,6 @@ func loadCredentials(role string) error {
 	if myConfig.VaultAddress == "" {
 		return fmt.Errorf("vault address not provided")
 	}
-	// valida se possui token de acesso ao vault
-	if myConfig.VaultToken == "" {
-		return fmt.Errorf("vault token not provided")
-	}
 	// valida se possui role para gerar as credenciais
 	if role == "" {
 		return fmt.Errorf("vault role not provided")
@@ -102,7 +98,25 @@ func loadCredentials(role string) error {
 		myConfig.VaultEnginePath = strings.TrimSuffix(myConfig.VaultEnginePath, "/")
 	}
 	// cria um novo client para o vault
-	vault := NewVault(myConfig.VaultAddress, myConfig.VaultToken)
+	vault := NewVault(myConfig.VaultAddress, myConfig.VaultAuthToken)
+	// identifica o metodo de autenticação a ser usado
+	switch strings.ToLower(myConfig.VaultAuthMethod) {
+	case VaultAuthByAppRole:
+		if myConfig.VaultAuthRoleId == "" {
+			return fmt.Errorf("vault autentication role id not provided")
+		}
+		if myConfig.VaultAuthSecretId == "" {
+			return fmt.Errorf("vault autentication secret id not provided")
+		}
+		err := vault.AuthByAppRole(myConfig.VaultAuthAppRolePath, myConfig.VaultAuthRoleId, myConfig.VaultAuthSecretId)
+		if err != nil {
+			return err
+		}
+	default:
+		if myConfig.VaultAuthToken == "" {
+			return fmt.Errorf("vault token not provided")
+		}
+	}
 	// solicita a credencial ao vault
 	secret, err := vault.Secrets(fmt.Sprintf("%s/%s", myConfig.VaultEnginePath, "sts"), role, "", "1")
 	if err != nil {
@@ -129,7 +143,11 @@ func processConfig(args []string) {
 	pSecretKey := cmdConfig.String("secretkey", "", "bucket secret key (will be asked to vault if not provided)")
 	pAccessToken := cmdConfig.String("accesstoken", "", "token session")
 	pVaultAddress := cmdConfig.String("vault", "", "url of vault api (sintax https://my-vault-url.com)")
-	pVaultToken := cmdConfig.String("vaulttoken", "", "vault token access")
+	pVaultAuthToken := cmdConfig.String("vaulttoken", "", "vault authentication token")
+	pVaultAuthMethod := cmdConfig.String("vaultauthmethod", "", "vault authentication method (token, approle)")
+	pVaultAuthRoleId := cmdConfig.String("vaultauthrole", "", "vault authentication role id")
+	pVaultAuthSecretId := cmdConfig.String("vaultauthsecret", "", "vault authentication secret id")
+	pVaultAppRolePath := cmdConfig.String("vaultapprolepath", "", "vault approle authentication path")
 	pVaultEnginePath := cmdConfig.String("vaultenginepath", "aws", "vault engine path to ask for credentials")
 	pFolder := cmdConfig.String("folder", "", "folder of files")
 	pFile := cmdConfig.String("out", "", "output file to save configuration")
@@ -188,8 +206,8 @@ func processConfig(args []string) {
 		myConfig.VaultAddress = *pVaultAddress
 	}
 	// configura o token de acesso ao vault
-	if *pVaultToken != "" {
-		myConfig.VaultToken = *pVaultToken
+	if *pVaultAuthToken != "" {
+		myConfig.VaultAuthToken = *pVaultAuthToken
 	}
 	// configura a pasta padrão onde estão ou serão gravados os arquivos
 	if *pFolder != "" {
@@ -198,6 +216,23 @@ func processConfig(args []string) {
 	// configura o caminho da engine para solicitar credenciais
 	if *pVaultEnginePath != "" {
 		myConfig.VaultEnginePath = *pVaultEnginePath
+	}
+	// configura o approle role id
+	if *pVaultAuthRoleId != "" {
+		myConfig.VaultAuthRoleId = *pVaultAuthRoleId
+	}
+	// configura o approle secret id
+	if *pVaultAuthSecretId != "" {
+		myConfig.VaultAuthSecretId = *pVaultAuthSecretId
+	}
+	// configura o approle path
+	if *pVaultAppRolePath != "" {
+		myConfig.VaultAuthAppRolePath = *pVaultAppRolePath
+	}
+	// configura o metodo de autenticação do vault
+	method := strings.ToLower(*pVaultAuthMethod)
+	if method != VaultAuthByAppRole && method != VaultAuthByToken {
+		log.Fatalf("vault authentication method {%s} is invalid", method)
 	}
 	// identifica onde deve ser salva as configurações
 	if *pFile == "" {

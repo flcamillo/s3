@@ -340,7 +340,6 @@ func processGet(args []string) {
 	pBucket := cmdGet.String("b", "", "bucket name")
 	pRegion := cmdGet.String("br", "", "bucket region")
 	pPartSize := cmdGet.Int("ps", 0, "size of each part of the file uploaded to the bucket (use 0 to automatic calculate)")
-	pMetaData := cmdGet.String("m", "", "metadata that will be stored in the file uploaded to the bucket (sintax key1=value1;key2=value2...)")
 	pEndPoint := cmdGet.String("ep", "", "url of bucket end point (sintax https://my-s3-url.com)")
 	pFolder := cmdGet.String("df", "", "default folder for files")
 	// define os parametros para utilização específicos para este método
@@ -370,22 +369,6 @@ func processGet(args []string) {
 		myConfig.PartSize = 0
 	} else {
 		myConfig.PartSize = *pPartSize
-	}
-	// configura os metadados que serão gravados por padrão em todos os
-	// arquivos que forem enviados para o bucket
-	if *pMetaData != "" {
-		// inicializa o mapa de metadados
-		myConfig.Metadata = make(map[string]string)
-		// extrai e configura os metados informados
-		// os metadados seguem o padrão: key1=valor1;key2=valor2
-		values := strings.Split(*pMetaData, ";")
-		for k, v := range values {
-			keyvalue := strings.Split(v, "=")
-			if len(keyvalue) < 2 {
-				log.Fatalf("[%d] metadata {%s} is invalid", k, v)
-			}
-			myConfig.Metadata[strings.TrimSpace(keyvalue[0])] = strings.TrimSpace(keyvalue[1])
-		}
 	}
 	// configura o endereço http do endpoint para acesso ao bucket
 	if *pEndPoint != "" {
@@ -712,7 +695,13 @@ func receiveFiles(filter string, prefix string, folder string, rename string, re
 		paginator := s3.NewListObjectsV2Paginator(s3client, params, func(o *s3.ListObjectsV2PaginatorOptions) {
 			o.Limit = 1000
 		})
+		// define a expressão regular para realizar a pesquisa
+		// caso seja passado o prefixo do bucket o mesmo deve
+		// ser considerado na validação
 		pattern := wildCardToRegexp(filter)
+		if prefix != "" {
+			pattern = regexp.QuoteMeta(prefix) + pattern
+		}
 		// processa a listagem das páginas
 		for paginator.HasMorePages() {
 			output, err := paginator.NextPage(context.TODO())

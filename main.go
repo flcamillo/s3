@@ -35,7 +35,9 @@ func main() {
 	help := "Usage:\n"
 	help += " s3 get -?\n"
 	help += " s3 put -?\n"
-	help += " s3 config -?\n"
+	help += " s3 config local -?\n"
+	help += " s3 config s3 -?\n"
+	help += " s3 config vault -?\n"
 	// se não há parametros exibe a ajuda
 	if len(os.Args) < 2 {
 		fmt.Print(help)
@@ -72,7 +74,22 @@ func main() {
 	case "put":
 		processPut(os.Args[2:])
 	case "config":
-		processConfig(os.Args[2:])
+		args := os.Args[2:]
+		if len(args) == 0 {
+			fmt.Print(help)
+			os.Exit(1)
+		}
+		switch args[0] {
+		case "s3":
+			processConfigS3(args[1:])
+		case "vault":
+			processConfigVault(args[1:])
+		case "local":
+			processConfigLocal(args[1:])
+		default:
+			fmt.Print(help)
+			os.Exit(1)
+		}
 	default:
 		fmt.Print(help)
 		os.Exit(1)
@@ -129,10 +146,22 @@ func loadCredentials(role string) error {
 	return nil
 }
 
+// Salva as configurações
+func saveConfig() error {
+	// define o caminho do arquivo de configuração
+	configPath, _ := os.UserHomeDir()
+	if configPath == "" {
+		configPath, _ = filepath.Abs(filepath.Dir(os.Args[0]))
+	}
+	configPath = filepath.Join(configPath, "s3.json")
+	// salva as configurações
+	return myConfig.Save(configPath)
+}
+
 // processa o comando de configuração
-func processConfig(args []string) {
+func processConfigS3(args []string) {
 	// identifica os flags informados
-	cmdConfig := flag.NewFlagSet("config", flag.ExitOnError)
+	cmdConfig := flag.NewFlagSet("s3", flag.ExitOnError)
 	// define os parametros para utilização
 	pBucket := cmdConfig.String("bucket", "", "bucket name")
 	pRegion := cmdConfig.String("region", "", "bucket region")
@@ -142,15 +171,6 @@ func processConfig(args []string) {
 	pAccessKey := cmdConfig.String("accesskey", "", "bucket access key (will be asked to vault if not provided)")
 	pSecretKey := cmdConfig.String("secretkey", "", "bucket secret key (will be asked to vault if not provided)")
 	pAccessToken := cmdConfig.String("accesstoken", "", "token session")
-	pVaultAddress := cmdConfig.String("vault", "", "url of vault api (sintax https://my-vault-url.com)")
-	pVaultAuthToken := cmdConfig.String("vaulttoken", "", "vault authentication token")
-	pVaultAuthMethod := cmdConfig.String("vaultauthmethod", "", "vault authentication method (token, approle)")
-	pVaultAuthRoleId := cmdConfig.String("vaultauthrole", "", "vault authentication role id")
-	pVaultAuthSecretId := cmdConfig.String("vaultauthsecret", "", "vault authentication secret id")
-	pVaultAppRolePath := cmdConfig.String("vaultapprolepath", "", "vault approle authentication path")
-	pVaultEnginePath := cmdConfig.String("vaultenginepath", "aws", "vault engine path to ask for credentials")
-	pFolder := cmdConfig.String("folder", "", "folder of files")
-	pFile := cmdConfig.String("out", "", "output file to save configuration")
 	// processa os parametros
 	err := cmdConfig.Parse(args)
 	if err != nil || len(args) == 0 {
@@ -164,6 +184,10 @@ func processConfig(args []string) {
 	// configura a região do bucket
 	if *pRegion != "" {
 		myConfig.Region = *pRegion
+	} else {
+		if myConfig.Region == "" {
+			myConfig.Region = "sa-east-1"
+		}
 	}
 	// configura o tamanho das partes para o envio de arquivo multipart
 	if *pPartSize < 5*1024*1024 {
@@ -201,6 +225,54 @@ func processConfig(args []string) {
 	if *pAccessToken != "" {
 		myConfig.AccessToken = *pAccessToken
 	}
+	// grava as configurações
+	err = saveConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// processa o comando de configuração
+func processConfigLocal(args []string) {
+	// identifica os flags informados
+	cmdConfig := flag.NewFlagSet("local", flag.ExitOnError)
+	// define os parametros para utilização
+	pFolder := cmdConfig.String("folder", "", "default folder of file to upload or download")
+	// processa os parametros
+	err := cmdConfig.Parse(args)
+	if err != nil || len(args) == 0 {
+		cmdConfig.Usage()
+		os.Exit(1)
+	}
+	// configura a pasta dos arquivos
+	if *pFolder != "" {
+		myConfig.LocalFolder = *pFolder
+	}
+	// grava as configurações
+	err = saveConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// processa o comando de configuração
+func processConfigVault(args []string) {
+	// identifica os flags informados
+	cmdConfig := flag.NewFlagSet("vault", flag.ExitOnError)
+	// define os parametros para utilização
+	pVaultAddress := cmdConfig.String("endpoint", "", "url of vault api (sintax https://my-vault-url.com)")
+	pVaultAuthToken := cmdConfig.String("token", "", "vault authentication token")
+	pVaultAuthMethod := cmdConfig.String("auth", "", "vault authentication method (token, approle)")
+	pVaultAuthRoleId := cmdConfig.String("authrole", "", "vault authentication role id")
+	pVaultAuthSecretId := cmdConfig.String("authsecret", "", "vault authentication secret id")
+	pVaultAppRolePath := cmdConfig.String("approlepath", "", "vault approle authentication path")
+	pVaultEnginePath := cmdConfig.String("enginepath", "", "vault engine path to ask for credentials")
+	// processa os parametros
+	err := cmdConfig.Parse(args)
+	if err != nil || len(args) == 0 {
+		cmdConfig.Usage()
+		os.Exit(1)
+	}
 	// configura o endereço http para as APIs do vault
 	if *pVaultAddress != "" {
 		myConfig.VaultAddress = *pVaultAddress
@@ -209,13 +281,17 @@ func processConfig(args []string) {
 	if *pVaultAuthToken != "" {
 		myConfig.VaultAuthToken = *pVaultAuthToken
 	}
-	// configura a pasta padrão onde estão ou serão gravados os arquivos
-	if *pFolder != "" {
-		myConfig.LocalFolder = *pFolder
-	}
-	// configura o caminho da engine para solicitar credenciais
-	if *pVaultEnginePath != "" {
-		myConfig.VaultEnginePath = *pVaultEnginePath
+	// configura o metodo de autenticação do vault
+	method := strings.ToLower(*pVaultAuthMethod)
+	if method != "" {
+		if method != VaultAuthByAppRole && method != VaultAuthByToken {
+			log.Fatalf("vault authentication method {%s} is invalid", method)
+		}
+		myConfig.VaultAuthMethod = method
+	} else {
+		if myConfig.VaultAuthMethod == "" {
+			myConfig.VaultAuthMethod = "token"
+		}
 	}
 	// configura o approle role id
 	if *pVaultAuthRoleId != "" {
@@ -229,21 +305,16 @@ func processConfig(args []string) {
 	if *pVaultAppRolePath != "" {
 		myConfig.VaultAuthAppRolePath = *pVaultAppRolePath
 	}
-	// configura o metodo de autenticação do vault
-	method := strings.ToLower(*pVaultAuthMethod)
-	if method != VaultAuthByAppRole && method != VaultAuthByToken {
-		log.Fatalf("vault authentication method {%s} is invalid", method)
-	}
-	// identifica onde deve ser salva as configurações
-	if *pFile == "" {
-		*pFile, _ = os.UserHomeDir()
-		if *pFile == "" {
-			*pFile, _ = filepath.Abs(filepath.Dir(os.Args[0]))
+	// configura o caminho da engine para solicitar credenciais
+	if *pVaultEnginePath != "" {
+		myConfig.VaultEnginePath = *pVaultEnginePath
+	} else {
+		if myConfig.VaultEnginePath == "" {
+			myConfig.VaultEnginePath = "aws"
 		}
-		*pFile = filepath.Join(*pFile, "s3.json")
 	}
-	// salva as configurações
-	err = myConfig.Save(*pFile)
+	// grava as configurações
+	err = saveConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -277,7 +348,7 @@ func processGet(args []string) {
 	pRemove := cmdGet.Bool("rm", false, "remove files after transfer")
 	pRename := cmdGet.String("c", "", fmt.Sprintf("change the name of target file\n%s", renameVars))
 	pErrorNoFiles := cmdGet.Bool("enf", false, "terminate with exit code 1 if no files found")
-	pRole := cmdGet.String("r", "", "role name to access bucket")
+	pRole := cmdGet.String("r", "", "vault role name to access bucket")
 	// parametros adicionais
 	pBucketPrefix := cmdGet.String("bp", "", "bucket prefix (sub folder)")
 	// processa os parametros
@@ -391,7 +462,7 @@ func processPut(args []string) {
 	pRemove := cmdPut.Bool("rm", false, "remove files after transfer")
 	pRename := cmdPut.String("c", "", fmt.Sprintf("change the name of target file\n%s", renameVars))
 	pErrorNoFiles := cmdPut.Bool("enf", false, "terminate with exit code 1 if no files found")
-	pRole := cmdPut.String("r", "", "role name to access bucket")
+	pRole := cmdPut.String("r", "", "vault role name to access bucket")
 	// parametros adicionais
 	pBucketPrefix := cmdPut.String("bp", "", "bucket prefix (sub folder)")
 	// processa os parametros

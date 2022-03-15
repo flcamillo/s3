@@ -140,7 +140,7 @@ func (p *Vault) Secrets(mount string, secret string, nameSpace string, version s
 		apiURL = fmt.Sprintf("%s/v1/%s/data/%s", p.Address, mount, secret)
 	}
 	// configura a requisição do vault
-	req, err := http.NewRequest(http.MethodGet, apiURL, nil)
+	req, err := http.NewRequest(http.MethodPost, apiURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create http request, %s", err)
 	}

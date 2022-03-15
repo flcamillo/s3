@@ -732,7 +732,7 @@ func receiveFiles(filter string, prefix string, folder string, rename string, re
 	} else {
 		// adiciona o proprio filtro para buscar no bucket
 		matches = append(matches, types.Object{
-			Key: aws.String(filter),
+			Key: aws.String(prefix + filter),
 		})
 	}
 	// lista os arquivos

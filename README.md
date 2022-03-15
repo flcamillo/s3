@@ -28,14 +28,14 @@ Antes de começar a utilizar o `s3` é necessário identificar qual o método pa
 ### Credenciais Estáticas
 Para configurar as credenciais que fornecem acesso ao seu bucket siga o processo abaixo:
 ```
-$ s3 config -accesskey=ACCESS_KEY -secretkey=SECRET_KEY
+$ s3 config s3 -accesskey=ACCESS_KEY -secretkey=SECRET_KEY
 ```
 
 
 ### Credenciais Dinâmicas
 As credenciais dinâmicas são geradas pelo Vault através da API STS e desta forma será necessário configurar a URL do Vault para gerar as credênciais assim como o token de acesso para executar a API.
 ```
-$ s3 config -vault=https://my-vault-url.com -vaulttoken=TOKEN -vaultenginepath=aws
+$ s3 config vault -endpoint=https://my-vault-url.com -token=TOKEN -enginepath=aws
 ```
 
 O `s3` deverá receber a `role` que será passada para o Vault gerar as credenciais para acessar o bucket.
@@ -54,14 +54,14 @@ Abaixo segue um resumo dos passos para o Vault poder gerar as credenciais dinâm
 ### Configurações gerais
 Para simplificar os parametros para envio e recepção dos arquivos, pode-se definir uma pasta padrão onde estarão os arquivos a serem enviados ou onde deverão ser recebidos os arquivos do bucket.
 ```
-$ s3 config -folder=/myfolder/mysubfolder
+$ s3 config local -folder=/myfolder/mysubfolder
 ```
 
 
 ### Endpoint para o bucket
 O `s3` também permite que seja configurado um endpoint específico para o bucket, este recurso é muito útil em uma rede privada sem exposição para Internet. 
 ```
-$ s3 config -endpoint=https://my-s3-url.com
+$ s3 config s3 -endpoint=https://my-s3-url.com
 ```
 
 ## Bucket Policy

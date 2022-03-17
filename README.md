@@ -3,6 +3,7 @@
 * [Tecnologias](#Tecnologias)
 * [Configuração](#Configuração)
 * [Bucket Policy](#Bucket-Policy)
+* [Renomeio de arquivos](#Renomeio-de-arquivos)
 * [Forma de Uso](#Forma-de-uso)
 
 

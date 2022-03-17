@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -28,6 +29,27 @@ var (
 	myConfig *Config
 	// define um client para o serviço s3 da aws
 	s3client *s3.Client
+	// define o gerador de numeros aleatórios
+	rnd = rand.New(rand.NewSource(time.Now().Unix()))
+)
+
+const (
+	// define os tipos de váriaveis para renomeio do arquivo
+	renameVars = `#DY = year 4 digits
+#YY = year 2 digits
+#DM = month number
+#DD = day of month
+#DJ = day of year
+#TH = hour 2 digits 00-23h
+#TM = minute 2 digits 00-59
+#TS = second 2 digits 00-59
+#TU = miliseconds 3 digits 000-999
+#SP = timestamp format yyyymmddhhMMssnnnnnnnnn
+#FN = file name without extension
+#FE = file extension with dot
+#R1 = random number 1 digit 0-9
+#R2 = random number 2 digits 00-99
+#R4 = random number 4 digits 0000-9999`
 )
 
 func main() {
@@ -324,18 +346,6 @@ func processConfigVault(args []string) {
 func processGet(args []string) {
 	// identifica os flags informados
 	cmdGet := flag.NewFlagSet("get", flag.ExitOnError)
-	// define os tipos de váriaveis para renomeio do arquivo
-	renameVars := ""
-	renameVars += " ${year}  = year 4 digits\n"
-	renameVars += " ${month} = month number\n"
-	renameVars += " ${day}   = day of month\n"
-	renameVars += " ${hour}  = hour 2 digits 00-23h \n"
-	renameVars += " ${min}   = minute 2 digits 00-59\n"
-	renameVars += " ${sec}   = second 2 digits 00-59\n"
-	renameVars += " ${mili}  = miliseconds 3 digits 000-999\n"
-	renameVars += " ${ts}    = timestamp format yyyymmddhhMMssnnnnnnnnn\n"
-	renameVars += " ${name}  = file name without extension\n"
-	renameVars += " ${ext}   = file extension with dot"
 	// define os parametros para sobrescrever o padrão configurado
 	pBucket := cmdGet.String("b", "", "bucket name")
 	pRegion := cmdGet.String("br", "", "bucket region")
@@ -384,7 +394,7 @@ func processGet(args []string) {
 	}
 	// valida o rename
 	if *pRename == "" {
-		*pRename = "${name}${ext}"
+		*pRename = "#FN#FE"
 	}
 	// ajusta o prefixo do bucket (sub pasta)
 	if *pBucketPrefix != "" {
@@ -421,18 +431,6 @@ func processGet(args []string) {
 func processPut(args []string) {
 	// identifica os flags informados
 	cmdPut := flag.NewFlagSet("put", flag.ExitOnError)
-	// define os tipos de váriaveis para renomeio do arquivo
-	renameVars := ""
-	renameVars += " ${year}  = year 4 digits\n"
-	renameVars += " ${month} = month number\n"
-	renameVars += " ${day}   = day of month\n"
-	renameVars += " ${hour}  = hour 2 digits 00-23h \n"
-	renameVars += " ${min}   = minute 2 digits 00-59\n"
-	renameVars += " ${sec}   = second 2 digits 00-59\n"
-	renameVars += " ${mili}  = miliseconds 3 digits 000-999\n"
-	renameVars += " ${ts}    = timestamp format yyyymmddhhMMssnnnnnnnnn\n"
-	renameVars += " ${name}  = file name without extension\n"
-	renameVars += " ${ext}   = file extension with dot"
 	// define os parametros para sobrescrever o padrão configurado
 	pBucket := cmdPut.String("b", "", "bucket name")
 	pRegion := cmdPut.String("br", "", "bucket region")
@@ -498,7 +496,7 @@ func processPut(args []string) {
 	}
 	// valida o rename
 	if *pRename == "" {
-		*pRename = "${name}${ext}"
+		*pRename = "#FN#FE"
 	}
 	// ajusta o prefixo do bucket (sub pasta)
 	if *pBucketPrefix != "" {
@@ -803,11 +801,17 @@ func receive(key string, filePath string) (n int64, err error) {
 // converte uma expressão wildcard para regex
 func wildCardToRegexp(pattern string) string {
 	var result strings.Builder
-	for i, literal := range strings.Split(pattern, "*") {
-		if i > 0 && len(literal) > 0 {
-			result.WriteString(".*")
+	var lastRune rune
+	for _, v := range pattern {
+		if v == '*' {
+			if lastRune != v {
+				lastRune = v
+				result.WriteString(".*")
+			}
+			continue
 		}
-		result.WriteString(regexp.QuoteMeta(literal))
+		result.WriteRune(v)
+		lastRune = v
 	}
 	return result.String()
 }
@@ -819,11 +823,15 @@ func parseName(name string, mask string) string {
 	year := date.Format("2006")
 	month := date.Format("01")
 	day := date.Format("02")
+	dayOfYear := date.YearDay()
 	hour := date.Format("15")
 	minute := date.Format("04")
 	second := date.Format("05")
 	milisecond := date.Format("000")
 	timestamp := date.Format("20060102150405999999999")
+	random1 := rnd.Intn(9)
+	random2 := rnd.Intn(99)
+	random4 := rnd.Intn(9999)
 	// extrai apenas o nome do arquivo
 	_, name = filepath.Split(name)
 	// extrai o nome e a extenção do arquivo
@@ -836,15 +844,20 @@ func parseName(name string, mask string) string {
 		}
 	}
 	// converte a máscara
-	result := strings.ReplaceAll(mask, "${year}", year)
-	result = strings.ReplaceAll(result, "${month}", month)
-	result = strings.ReplaceAll(result, "${day}", day)
-	result = strings.ReplaceAll(result, "${hour}", hour)
-	result = strings.ReplaceAll(result, "${min}", minute)
-	result = strings.ReplaceAll(result, "${sec}", second)
-	result = strings.ReplaceAll(result, "${mili}", milisecond)
-	result = strings.ReplaceAll(result, "${ts}", timestamp)
-	result = strings.ReplaceAll(result, "${name}", name)
-	result = strings.ReplaceAll(result, "${ext}", ext)
+	result := strings.ReplaceAll(mask, "#DY", year)
+	result = strings.ReplaceAll(result, "#YY", year[2:])
+	result = strings.ReplaceAll(result, "#DM", month)
+	result = strings.ReplaceAll(result, "#DD", day)
+	result = strings.ReplaceAll(result, "#DJ", fmt.Sprintf("%d", dayOfYear))
+	result = strings.ReplaceAll(result, "#TH", hour)
+	result = strings.ReplaceAll(result, "#TM", minute)
+	result = strings.ReplaceAll(result, "#TS", second)
+	result = strings.ReplaceAll(result, "#TU", milisecond)
+	result = strings.ReplaceAll(result, "#SP", timestamp)
+	result = strings.ReplaceAll(result, "#FN", name)
+	result = strings.ReplaceAll(result, "#FE", ext)
+	result = strings.ReplaceAll(result, "#R1", fmt.Sprintf("%01d", random1))
+	result = strings.ReplaceAll(result, "#R2", fmt.Sprintf("%02d", random2))
+	result = strings.ReplaceAll(result, "#R4", fmt.Sprintf("%04d", random4))
 	return result
 }

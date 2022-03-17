@@ -113,6 +113,30 @@ Abaixo seguem exemplos de políticas que podem ser definidas para restringir o a
 }
 ```
 
+## Renomeio de arquivos
+
+O parametro `-c` oferece diversas opções para customizar o nome do arquivo que será enviado ou recebido do bucket S3. Abaixo seguem as variáveis que podem ser usadas para gerar nomes dinâmicos.
+
+```
+#DY = year 4 digits
+#YY = year 2 digits
+#DM = month number
+#DD = day of month
+#DJ = day of year
+#TH = hour 2 digits 00-23h
+#TM = minute 2 digits 00-59
+#TS = second 2 digits 00-59
+#TU = miliseconds 3 digits 000-999
+#SP = timestamp format yyyymmddhhMMssnnnnnnnnn
+#FN = file name without extension
+#FE = file extension with dot
+#R1 = random number 1 digit 0-9
+#R2 = random number 2 digits 00-99
+#R4 = random number 4 digits 0000-9999`
+```
+
+Para deixar mais claro vamos supor que o nome de um arquivo seja `teste.txt` e que seja utilizado o parametro `-c=#DY#DM#DD_#FN_#R1#FE` o nome gerado seguiria esse padrão: `20220317_teste_1.txt`.
+
 ## Forma de uso
 
 ### Envio para o bucket
@@ -126,6 +150,12 @@ s3 put -b=MY-BUCKET -r=MY-ROLE -f=FILE.TXT
 
 ```
 s3 put -b=MY-BUCKET -r=MY-ROLE -f=*.TXT
+```
+
+#### Multiplos arquivos com renomeio
+
+```
+s3 put -b=MY-BUCKET -r=MY-ROLE -f=*.TXT -c=FILE_#SP#FE
 ```
 
 #### Usando subpasta no bucket
@@ -158,6 +188,12 @@ s3 get -b=MY-BUCKET -r=MY-ROLE -f=FILE.TXT
 
 ```
 s3 get -b=MY-BUCKET -r=MY-ROLE -f=*.TXT
+```
+
+#### Multiplos arquivos com renomeio
+
+```
+s3 get -b=MY-BUCKET -r=MY-ROLE -f=*.TXT -c=#DYDMDD_#FN#FE
 ```
 
 #### Usando subpasta no bucket

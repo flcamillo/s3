@@ -52,7 +52,7 @@ func DefaultConfig() *Config {
 // Carrega a configuração do arquivo
 func (p *Config) Load(config string) error {
 	// abre o arquivo
-	f, err := os.OpenFile(config, os.O_RDONLY, 0755)
+	f, err := os.OpenFile(config, os.O_RDONLY, 0774)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (p *Config) Load(config string) error {
 // Grava a configuração no arquivo
 func (p *Config) Save(config string) error {
 	// abre o arquivo
-	f, err := os.OpenFile(config, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0755)
+	f, err := os.OpenFile(config, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0774)
 	if err != nil {
 		return err
 	}

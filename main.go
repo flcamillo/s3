@@ -638,7 +638,7 @@ func sendFiles(filter string, prefix string, folder string, rename string, remov
 // realiza o envio dos arquivos com o filtro especificado para o bucket
 func send(file string, key string, metaData map[string]string) (n int64, result *manager.UploadOutput, err error) {
 	// abre o arquivo para realizar o envio
-	f, err := os.OpenFile(file, os.O_RDONLY, 0755)
+	f, err := os.OpenFile(file, os.O_RDONLY, 0774)
 	if err != nil {
 		return 0, nil, fmt.Errorf("unable to open file {%s}, %s", file, err)
 	}
@@ -778,7 +778,7 @@ func receiveFiles(filter string, prefix string, folder string, rename string, re
 // realiza a recepção do arquivo
 func receive(key string, filePath string) (n int64, err error) {
 	// cria o arquivo em disco
-	f, err := os.OpenFile(filePath, os.O_WRONLY+os.O_CREATE+os.O_TRUNC, 0774)
+	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0774)
 	if err != nil {
 		return 0, fmt.Errorf("unable to create file, %s", err)
 	}

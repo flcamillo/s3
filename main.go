@@ -583,6 +583,12 @@ func configureAWSClient() (err error) {
 
 // Realiza o envio dos arquivos para o bucket com o filtro especificado
 func sendFiles(filter string, prefix string, folder string, rename string, remove bool, metaData map[string]string, errornofiles bool) error {
+	// loga o endpoint e o bucket que será usado
+	if myConfig.EndPoint != "" {
+		log.Printf("using custom endpoint {%s} for bucket {%s}...", myConfig.EndPoint, myConfig.Bucket)
+	} else {
+		log.Printf("using default AWS endpoint for bucket {%s}...", myConfig.Bucket)
+	}
 	// lista os arquivos que batem com o filtro
 	matches, err := filepath.Glob(filepath.Join(folder, filter))
 	if err != nil {
@@ -682,6 +688,12 @@ func receiveFiles(filter string, prefix string, folder string, rename string, re
 	var matches []types.Object
 	// define um contador para exibir quantos objetos foram verificados no bucket
 	var count int64
+	// loga o endpoint e o bucket que será usado
+	if myConfig.EndPoint != "" {
+		log.Printf("using custom endpoint {%s} for bucket {%s}...", myConfig.EndPoint, myConfig.Bucket)
+	} else {
+		log.Printf("using default AWS endpoint for bucket {%s}...", myConfig.Bucket)
+	}
 	// se foi passado wildcard no filto então lista o bucket para selecionar os arquivos
 	if strings.Contains(filter, "*") {
 		// define os parametros de listagem

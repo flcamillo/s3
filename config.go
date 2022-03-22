@@ -30,7 +30,7 @@ type Config struct {
 	VaultAuthSecretId    string            `json:"vault_auth_secret_id,omitempty"`
 	VaultAuthAppRolePath string            `json:"vault_auth_approle_path,omitempty"`
 	VaultAddress         string            `json:"vault_address,omitempty"`
-	VaultEnginePath      string            `json:"vault_token_engine_pah,omitempty"`
+	VaultEnginePath      string            `json:"vault_token_engine_path,omitempty"`
 	LocalFolder          string            `json:"local_folder,omitempty"`
 }
 

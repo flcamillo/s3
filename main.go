@@ -30,7 +30,7 @@ var (
 	// define um client para o serviço s3 da aws
 	s3client *s3.Client
 	// define o gerador de numeros aleatórios
-	rnd = rand.New(rand.NewSource(time.Now().Unix()))
+	random = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 const (
@@ -68,13 +68,22 @@ func main() {
 	// define a configuração padrão
 	myConfig = DefaultConfig()
 	// identifica o diretório do arquivo de configuração
+	// prioridade do diretório:
+	// 1) variavel de ambiente S3_CONFIG
+	// 2) diretório padrão do usuário
+	// 3) diretório da aplicação
 	configDir := os.Getenv("S3_CONFIG")
 	if configDir == "" {
-		dir, err := os.UserHomeDir()
-		if err != nil {
-			log.Fatalf("unable to identify user home directory, %s", err)
+		dir, err1 := os.UserHomeDir()
+		if err1 != nil {
+			dir, err2 := filepath.Abs(filepath.Dir(os.Args[0]))
+			if err2 != nil {
+				log.Fatal("unable to identify configuration directory")
+			}
+			configDir = dir
+		} else {
+			configDir = dir
 		}
-		configDir = dir
 	}
 	// carrega o arquivo de configuração
 	if configDir != "" {
@@ -841,9 +850,9 @@ func parseName(name string, mask string) string {
 	second := date.Format("05")
 	milisecond := date.Format("000")
 	timestamp := date.Format("20060102150405999999999")
-	random1 := rnd.Intn(9)
-	random2 := rnd.Intn(99)
-	random4 := rnd.Intn(9999)
+	random1 := random.Intn(9)
+	random2 := random.Intn(99)
+	random4 := random.Intn(9999)
 	// extrai apenas o nome do arquivo
 	_, name = filepath.Split(name)
 	// extrai o nome e a extenção do arquivo

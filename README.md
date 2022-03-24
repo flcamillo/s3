@@ -10,7 +10,7 @@
 ## Informações Gerais
 Este programa fornece recursos para realizar envio ou recepção de arquivos para um bucket usando a API S3.
 Abaixo seguem alguns recursos:
-* Envio e recepção de multiplos arquivos
+* Envio e recepção de múltiplos arquivos
 * Renomeio de arquivos através de variáveis
 * Exclusão automática dos arquivos enviados ou recebidos
 * Inclusão de metadados nos arquivos enviados para o bucket
@@ -160,13 +160,13 @@ Para deixar mais claro vamos supor que o nome de um arquivo seja `teste.txt` e q
 s3 put -b=MY-BUCKET -r=MY-ROLE -f=FILE.TXT
 ```
 
-#### Multiplos arquivos
+#### Múltiplos arquivos
 
 ```
 s3 put -b=MY-BUCKET -r=MY-ROLE -f=*.TXT
 ```
 
-#### Multiplos arquivos com renomeio
+#### Múltiplos arquivos com renomeio
 
 ```
 s3 put -b=MY-BUCKET -r=MY-ROLE -f=*.TXT -c=FILE_#SP#FE
@@ -197,13 +197,13 @@ s3 put -b=MY-BUCKET -r=MY-ROLE -f=*.TXT -rm
 s3 get -b=MY-BUCKET -r=MY-ROLE -f=FILE.TXT
 ```
 
-#### Multiplos arquivos
+#### Múltiplos arquivos
 
 ```
 s3 get -b=MY-BUCKET -r=MY-ROLE -f=*.TXT
 ```
 
-#### Multiplos arquivos com renomeio
+#### Múltiplos arquivos com renomeio
 
 ```
 s3 get -b=MY-BUCKET -r=MY-ROLE -f=*.TXT -c=#DY#DM#DD_#FN#FE

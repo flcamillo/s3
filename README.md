@@ -8,11 +8,12 @@
 
 
 ## Informações Gerais
-Este programa fornece recursos para realizar transmissões de arquivos para um bucket usando a API S3.
+Este programa fornece recursos para realizar envio ou recepção de arquivos para um bucket usando a API S3.
 Abaixo seguem alguns recursos:
-* Envio e recepção multiplos arquivos
+* Envio e recepção de multiplos arquivos
 * Renomeio de arquivos através de variáveis
-* Inclusão de metadados nos arquivos gravados no bucket
+* Exclusão automática dos arquivos enviados ou recebidos
+* Inclusão de metadados nos arquivos enviados para o bucket
 * Autenticação usando credenciais `ACCESS_KEY` e `SECRET_KEY` estáticas
 * Autenticação usando credenciais dinâmica geradas via [Vault](https://www.hashicorp.com/products/vault)
 	
@@ -20,7 +21,8 @@ Abaixo seguem alguns recursos:
 ## Tecnologias
 Este projeto foi criado com:
 * Golang: 1.17
-	
+* AWS API: aws-sdk-go-v2	
+
 
 ## Configuração
 Antes de começar a utilizar o `s3` é necessário identificar qual o método para as credenciais será utilizado.
@@ -32,9 +34,15 @@ Para configurar as credenciais que fornecem acesso ao seu bucket siga o processo
 $ s3 config s3 -accesskey=ACCESS_KEY -secretkey=SECRET_KEY
 ```
 
-
 ### Credenciais Dinâmicas
-As credenciais dinâmicas são geradas pelo Vault através da API STS e desta forma será necessário configurar a URL do Vault para gerar as credênciais assim como o token de acesso para executar a API.
+As credenciais dinâmicas são geradas pelo Vault através da API STS e desta forma será necessário configurar a URL do Vault para gerar as credênciais e o método de autenticação para executar suas API's.
+
+A autenticação pode ser realizada de duas formas:
+* Token
+* AppRole
+
+A forma mais simples é utilizando `Token` onde é necessário configurar apenas um parametro de autenticação. Para o `AppRole` será necessário configurar o `role_id` e o `secret_id` para se autenticar.
+
 ```
 $ s3 config vault -endpoint=https://my-vault-url.com -token=TOKEN -enginepath=aws
 ```
@@ -46,10 +54,11 @@ Abaixo segue um resumo dos passos para o Vault poder gerar as credenciais dinâm
 * Criar uma política que fornecerá o acesso necessário ao bucket
 * Criar uma função e associar a esta função:
   * a política criada para acesso ao bucket
-  * a relação de confiança para o usuário do Vault realizar o sts:AssumeRole
+  * a relação de confiança para o usuário do Vault realizar o `sts:AssumeRole`
 * Configurar a engine `aws` no Vault
 * Configurar na engine `aws` o `ACCESS_KEY` e `SECRET_KEY` do usuário do Vault que foi criado
 * Configurar uma role usando o tipo de credencial `Assumed Role` e informar o `Arn` da função criada na AWS
+
 **Observação:** o usuário criado para o Vault não precisa ter nenhum acesso associado à ele
 
 ### Configurações gerais
@@ -58,12 +67,15 @@ Para simplificar os parametros para envio e recepção dos arquivos, pode-se def
 $ s3 config local -folder=/myfolder/mysubfolder
 ```
 
-
 ### Endpoint para o bucket
 O `s3` também permite que seja configurado um endpoint específico para o bucket, este recurso é muito útil em uma rede privada sem exposição para Internet. 
 ```
 $ s3 config s3 -endpoint=https://my-s3-url.com
 ```
+
+Todas as configurações realizadas serão gravadas no arquivo `config.json`. Este arquivo por padrão é armazenado no diretório `$HOME` (em ambiente Linux) ou `%USERPROFILE%` (em ambiente Windows). 
+Caso não seja possível identificar este diretório então o arquivo será gravado na mesma pasta onde o `s3` se encontra.
+
 
 ## Bucket Policy
 Abaixo seguem exemplos de políticas que podem ser definidas para restringir o acesso ao bucket.
@@ -138,6 +150,7 @@ O parametro `-c` oferece diversas opções para customizar o nome do arquivo que
 
 Para deixar mais claro vamos supor que o nome de um arquivo seja `teste.txt` e que seja utilizado o parametro `-c=#DY#DM#DD_#FN_#R1#FE` o nome gerado seguiria esse padrão: `20220317_teste_1.txt`.
 
+
 ## Forma de uso
 
 ### Envio para o bucket
@@ -177,7 +190,6 @@ s3 put -b=MY-BUCKET -r=MY-ROLE -f=*.TXT -m="metada1=value1;metada2=value2"
 s3 put -b=MY-BUCKET -r=MY-ROLE -f=*.TXT -rm
 ```
 
-
 ### Recepção do bucket
 #### Um único arquivo
 
@@ -194,7 +206,7 @@ s3 get -b=MY-BUCKET -r=MY-ROLE -f=*.TXT
 #### Multiplos arquivos com renomeio
 
 ```
-s3 get -b=MY-BUCKET -r=MY-ROLE -f=*.TXT -c=#DYDMDD_#FN#FE
+s3 get -b=MY-BUCKET -r=MY-ROLE -f=*.TXT -c=#DY#DM#DD_#FN#FE
 ```
 
 #### Usando subpasta no bucket

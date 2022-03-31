@@ -44,7 +44,7 @@ const (
 #TM = minute 2 digits 00-59
 #TS = second 2 digits 00-59
 #TU = miliseconds 3 digits 000-999
-#SP = timestamp format yyyymmddhhMMssnnnnnnnnn
+#SP = timestamp format yyyymmddhhMMssnnnnnnn
 #FN = file name without extension
 #FE = file extension with dot
 #R1 = random number 1 digit 0-9
@@ -849,7 +849,7 @@ func parseName(name string, mask string) string {
 	minute := date.Format("04")
 	second := date.Format("05")
 	milisecond := date.Format("000")
-	timestamp := date.Format("20060102150405999999999")
+	timestamp := strings.ReplaceAll(date.Format("20060102150405.999999999"), ".", "")
 	random1 := random.Intn(9)
 	random2 := random.Intn(99)
 	random4 := random.Intn(9999)

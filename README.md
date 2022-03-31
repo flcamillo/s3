@@ -140,7 +140,7 @@ O parametro `-c` oferece diversas opções para customizar o nome do arquivo que
 #TM = minute 2 digits 00-59
 #TS = second 2 digits 00-59
 #TU = miliseconds 3 digits 000-999
-#SP = timestamp format yyyymmddhhMMssnnnnnnnnn
+#SP = timestamp format yyyymmddhhMMssnnnnnnn
 #FN = file name without extension
 #FE = file extension with dot
 #R1 = random number 1 digit 0-9

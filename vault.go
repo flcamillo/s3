@@ -68,6 +68,8 @@ func (p *Vault) AuthByAppRole(path string, roleId string, secretId string) error
 	if err != nil {
 		return fmt.Errorf("unable to create http request, %s", err)
 	}
+	// configura os cabecalhos da requisição
+	req.Header.Set("Content-Type", "application/json")
 	// executa a autenticação
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
@@ -129,6 +131,8 @@ func (p *Vault) AuthByCertificate(path string, cert string, certkey string, cace
 		},
 	}
 	p.httpClient.Transport = tr
+	// configura os cabecalhos da requisição
+	req.Header.Set("Content-Type", "application/json")
 	// executa a autenticação
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
@@ -206,12 +210,15 @@ func (p *Vault) Secrets(mount string, secret string, nameSpace string, version s
 	if version == "2" {
 		apiURL = fmt.Sprintf("%s/v1/%s/data/%s", p.Address, mount, secret)
 	}
+	// formata o corpo da mensagem para a requisição
+	body := bytes.NewBufferString(fmt.Sprintf(`{"ttl": "%s"}`, "120m"))
 	// configura a requisição do vault
-	req, err := http.NewRequest(http.MethodPost, apiURL, nil)
+	req, err := http.NewRequest(http.MethodPost, apiURL, body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create http request, %s", err)
 	}
 	// configura os cabecalhos da requisição
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Vault-Token", p.Token)
 	if nameSpace != "" {
 		req.Header.Set("X-Vault-Namespace", nameSpace)

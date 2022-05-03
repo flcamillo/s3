@@ -211,7 +211,7 @@ func (p *Vault) Secrets(mount string, secret string, nameSpace string, version s
 		apiURL = fmt.Sprintf("%s/v1/%s/data/%s", p.Address, mount, secret)
 	}
 	// formata o corpo da mensagem para a requisição
-	body := bytes.NewBufferString(fmt.Sprintf(`{"ttl": "%s"}`, "120m"))
+	body := bytes.NewBufferString(fmt.Sprintf(`{"ttl": "%s"}`, "3600s"))
 	// configura a requisição do vault
 	req, err := http.NewRequest(http.MethodPost, apiURL, body)
 	if err != nil {

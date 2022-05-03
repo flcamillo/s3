@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -75,6 +77,71 @@ func (p *Vault) AuthByAppRole(path string, roleId string, secretId string) error
 	// loga a falha se a requisição não foi processada com sucesso
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("invalid response receive from {%s}, %s", req.URL, resp.Status)
+	}
+	// le o retorno
+	var data map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		return fmt.Errorf("failed to decode vault response, %s", err)
+	}
+	// identifica o token a ser usado
+	auth := data["auth"].(map[string]interface{})
+	p.Token = auth["client_token"].(string)
+	return nil
+}
+
+// Realiza a autenticação usando role e secret
+func (p *Vault) AuthByCertificate(path string, cert string, certkey string, cacert string, certrole string) error {
+	// se não foi passado o path então usa o padrão
+	if path == "" {
+		path = "v1/auth/cert/login"
+	}
+	path = strings.TrimSuffix(path, "/")
+	// define a url para realizar a autenticação
+	apiURL := fmt.Sprintf("%s/%s", p.Address, path)
+	// formata o corpo da mensagem para a requisição
+	body := bytes.NewBufferString(fmt.Sprintf(`{"name": "%s"}`, certrole))
+	// define a requisição para realizar a autenticação
+	req, err := http.NewRequest(http.MethodPost, apiURL, body)
+	if err != nil {
+		return fmt.Errorf("unable to create http request, %s", err)
+	}
+	// carrega os certificados do cliente
+	cadata, err := ioutil.ReadFile(cacert)
+	if err != nil {
+		return fmt.Errorf("unable to load CA certificate, %s", err)
+	}
+	caCertPool := x509.NewCertPool()
+	ok := caCertPool.AppendCertsFromPEM(cadata)
+	if !ok {
+		return fmt.Errorf("CA PEM certificate not found, %s", err)
+	}
+	x509cert, err := tls.LoadX509KeyPair(cert, certkey)
+	if err != nil {
+		return fmt.Errorf("unable to load client certificate, %s", err)
+	}
+	// cria um novo transport para o client http com os certificados lidos
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:            caCertPool,
+			Certificates:       []tls.Certificate{x509cert},
+			InsecureSkipVerify: true,
+		},
+	}
+	p.httpClient.Transport = tr
+	// executa a autenticação
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("unable to execute http request to {%s}, %s", req.URL, err)
+	}
+	defer resp.Body.Close()
+	// loga a falha se a requisição não foi processada com sucesso
+	if resp.StatusCode != http.StatusOK {
+		respData, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("invalid response receive from {%s}, %s", req.URL, resp.Status)
+		}
+		return fmt.Errorf("invalid response receive from {%s}, %s, %s", req.URL, resp.Status, string(respData))
 	}
 	// le o retorno
 	var data map[string]interface{}

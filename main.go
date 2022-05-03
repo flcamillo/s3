@@ -149,6 +149,20 @@ func loadCredentials(role string) error {
 	vault := NewVault(myConfig.VaultAddress, myConfig.VaultAuthToken)
 	// identifica o metodo de autenticação a ser usado
 	switch strings.ToLower(myConfig.VaultAuthMethod) {
+	case VaultAuthByCertificate:
+		if myConfig.VaultAuthCert == "" {
+			return fmt.Errorf("vault autentication certificate not provided")
+		}
+		if myConfig.VaultAuthCertKey == "" {
+			return fmt.Errorf("vault autentication certificate key not provided")
+		}
+		if myConfig.VaultAuthCertCA == "" {
+			return fmt.Errorf("vault autentication CA certificate not provided")
+		}
+		err := vault.AuthByCertificate(myConfig.VaultAuthCertPath, myConfig.VaultAuthCert, myConfig.VaultAuthCertKey, myConfig.VaultAuthCertCA, myConfig.VaultAuthCertRole)
+		if err != nil {
+			return err
+		}
 	case VaultAuthByAppRole:
 		if myConfig.VaultAuthRoleId == "" {
 			return fmt.Errorf("vault autentication role id not provided")
@@ -293,11 +307,18 @@ func processConfigVault(args []string) {
 	// define os parametros para utilização
 	pVaultAddress := cmdConfig.String("endpoint", "", "url of vault api (sintax https://my-vault-url.com)")
 	pVaultAuthToken := cmdConfig.String("token", "", "vault authentication token")
-	pVaultAuthMethod := cmdConfig.String("auth", "", "vault authentication method (token, approle)")
+	pVaultAuthMethod := cmdConfig.String("auth", "", "vault authentication method (token, approle, cert)")
+	pVaultEnginePath := cmdConfig.String("enginepath", "", "vault engine path to ask for credentials")
+	// parametros para autenticação via app role
 	pVaultAuthRoleId := cmdConfig.String("authrole", "", "vault authentication role id")
 	pVaultAuthSecretId := cmdConfig.String("authsecret", "", "vault authentication secret id")
 	pVaultAppRolePath := cmdConfig.String("approlepath", "", "vault approle authentication path")
-	pVaultEnginePath := cmdConfig.String("enginepath", "", "vault engine path to ask for credentials")
+	// parametros para autenticação via certificado
+	pVaultAuthCert := cmdConfig.String("authcert", "", "vault authentication certificate")
+	pVaultAuthCertKey := cmdConfig.String("authcertkey", "", "vault authentication certificate key")
+	pVaultAuthCertCA := cmdConfig.String("authcertca", "", "vault authentication certificate CA")
+	pVaultAuthCertRole := cmdConfig.String("authcertrole", "", "vault authentication certificate role name")
+	pVaultAuthCertPath := cmdConfig.String("authcertpath", "", "vault certificate autentication path")
 	// processa os parametros
 	err := cmdConfig.Parse(args)
 	if err != nil || len(args) == 0 {
@@ -315,7 +336,7 @@ func processConfigVault(args []string) {
 	// configura o metodo de autenticação do vault
 	method := strings.ToLower(*pVaultAuthMethod)
 	if method != "" {
-		if method != VaultAuthByAppRole && method != VaultAuthByToken {
+		if method != VaultAuthByAppRole && method != VaultAuthByToken && method != VaultAuthByCertificate {
 			log.Fatalf("vault authentication method {%s} is invalid", method)
 		}
 		myConfig.VaultAuthMethod = method
@@ -335,6 +356,26 @@ func processConfigVault(args []string) {
 	// configura o approle path
 	if *pVaultAppRolePath != "" {
 		myConfig.VaultAuthAppRolePath = *pVaultAppRolePath
+	}
+	// configura o caminho do arquivo de certificado
+	if *pVaultAuthCert != "" {
+		myConfig.VaultAuthCert = *pVaultAuthCert
+	}
+	// configura o caminho do arquivo contendo a chave do certificado
+	if *pVaultAuthCertKey != "" {
+		myConfig.VaultAuthCertKey = *pVaultAuthCertKey
+	}
+	// configura o caminho do arquivo de certificado raiz (CA)
+	if *pVaultAuthCertCA != "" {
+		myConfig.VaultAuthCertCA = *pVaultAuthCertCA
+	}
+	// configura o nome da role de certificado
+	if *pVaultAuthCertRole != "" {
+		myConfig.VaultAuthCertRole = *pVaultAuthCertRole
+	}
+	// configura o caminho da url para autenticar via certificado
+	if *pVaultAuthCertPath != "" {
+		myConfig.VaultAuthCertPath = *pVaultAuthCertPath
 	}
 	// configura o caminho da engine para solicitar credenciais
 	if *pVaultEnginePath != "" {

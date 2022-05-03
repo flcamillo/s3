@@ -9,29 +9,39 @@ import (
 
 // Define as formas de autenticação no vault
 const (
-	VaultAuthByToken   = "token"
-	VaultAuthByAppRole = "approle"
+	VaultAuthByToken       = "token"
+	VaultAuthByAppRole     = "approle"
+	VaultAuthByCertificate = "cert"
 )
 
 // Define todas as configurações que podem ser definidas como padrão,
 // caso não sejam passadas por linha de comando
 type Config struct {
-	Metadata             map[string]string `json:"bucket_metadata,omitempty"`
-	Bucket               string            `json:"bucket_name,omitempty"`
-	Region               string            `json:"bucket_region,omitempty"`
-	PartSize             int               `json:"bucket_part_size,omitempty"`
-	EndPoint             string            `json:"bucket_endpoint_address,omitempty"`
-	AccessKey            string            `json:"bucket_access_key,omitempty"`
-	SecretKey            string            `json:"bucket_secret_key,omitempty"`
-	AccessToken          string            `json:"bucket_token_session,omitempty"`
-	VaultAuthMethod      string            `json:"vault_auth_method,omitempty"`
-	VaultAuthToken       string            `json:"vault_auth_token,omitempty"`
-	VaultAuthRoleId      string            `json:"vault_auth_role_id,omitempty"`
-	VaultAuthSecretId    string            `json:"vault_auth_secret_id,omitempty"`
-	VaultAuthAppRolePath string            `json:"vault_auth_approle_path,omitempty"`
-	VaultAddress         string            `json:"vault_address,omitempty"`
-	VaultEnginePath      string            `json:"vault_token_engine_path,omitempty"`
-	LocalFolder          string            `json:"local_folder,omitempty"`
+	Metadata        map[string]string `json:"bucket_metadata,omitempty"`
+	Bucket          string            `json:"bucket_name,omitempty"`
+	Region          string            `json:"bucket_region,omitempty"`
+	PartSize        int               `json:"bucket_part_size,omitempty"`
+	EndPoint        string            `json:"bucket_endpoint_address,omitempty"`
+	VaultAddress    string            `json:"vault_address,omitempty"`
+	VaultEnginePath string            `json:"vault_token_engine_path,omitempty"`
+	LocalFolder     string            `json:"local_folder,omitempty"`
+	// autenticação basica
+	AccessKey   string `json:"bucket_access_key,omitempty"`
+	SecretKey   string `json:"bucket_secret_key,omitempty"`
+	AccessToken string `json:"bucket_token_session,omitempty"`
+	// autenticação basica do vault
+	VaultAuthMethod string `json:"vault_auth_method,omitempty"`
+	VaultAuthToken  string `json:"vault_auth_token,omitempty"`
+	// autenticação do vault com role
+	VaultAuthRoleId      string `json:"vault_auth_role_id,omitempty"`
+	VaultAuthSecretId    string `json:"vault_auth_secret_id,omitempty"`
+	VaultAuthAppRolePath string `json:"vault_auth_approle_path,omitempty"`
+	// autenticação do vault com certificado
+	VaultAuthCert     string `json:"vault_auth_certificate,omitempty"`
+	VaultAuthCertKey  string `json:"vault_auth_certificate_key,omitempty"`
+	VaultAuthCertCA   string `json:"vault_auth_certificate_ca,omitempty"`
+	VaultAuthCertRole string `json:"vault_auth_certificate_role,omitempty"`
+	VaultAuthCertPath string `json:"vault_auth_certificate_path,omitempty"`
 }
 
 // Retorna a configuração padrão

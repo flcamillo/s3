@@ -37,14 +37,47 @@ $ s3 config s3 -accesskey=ACCESS_KEY -secretkey=SECRET_KEY
 ### Credenciais Dinâmicas
 As credenciais dinâmicas são geradas pelo Vault através da API STS e desta forma será necessário configurar a URL do Vault para gerar as credênciais e o método de autenticação para executar suas API's.
 
-A autenticação pode ser realizada de duas formas:
+A autenticação pode ser realizada através dos métodos abaixo:
 * Token
 * AppRole
+* Certificate
 
 A forma mais simples é utilizando `Token` onde é necessário configurar apenas um parametro de autenticação. Para o `AppRole` será necessário configurar o `role_id` e o `secret_id` para se autenticar.
 
 ```
 $ s3 config vault -endpoint=https://my-vault-url.com -token=TOKEN -enginepath=aws
+```
+
+Se desejar utilizar autenticação baseada em `Certificado` então será necessário criar os seguintes arquivos em formato `PEM`:
+* Certificado Público
+* Chave do Certificado Público
+* Certificado de Autoridade de Certificação (CA)
+
+Exemplo do arquivo de certificado:
+```
+-----BEGIN CERTIFICATE-----
+MIIFaDCCBFCgAwIBAgISESHkvZFwK9Qz0KsXD3x8p44aMA0GCSqGSIb3DQEBCwUA
+VQQDDBcqLmF3cy10ZXN0LnByb2dyZXNzLmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD
+ggEPADCCAQoCggEBAMGPTyynn77hqcYnjWsMwOZDzdhVFY93s2OJntMbuKTHn39B
+...
+bml6YXRpb252YWxzaGEyZzIuY3JsMIGgBggrBgEFBQcBAQSBkzCBkDBNBggrBgEF
+BQcwAoZBaHR0cDovL3NlY3VyZS5nbG9iYWxzaWduLmNvbS9jYWNlcnQvZ3Nvcmdh
+bml6YXRpb252YWxzaGEyZzJyMS5jcnQwPwYIKwYBBQUHMAGGM2h0dHA6Ly9vY3Nw
+lffygD5IymCSuuDim4qB/9bh7oi37heJ4ObpBIzroPUOthbG4gv/5blW3Dc=
+-----END CERTIFICATE-----
+```
+
+Exemplo do arquivo de chave do certificado.
+```
+-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDBj08sp5++4anG
+cmQxJjAkBgNVBAoTHVByb2dyZXNzIFNvZnR3YXJlIENvcnBvcmF0aW9uMSAwHgYD
+VQQDDBcqLmF3cy10ZXN0LnByb2dyZXNzLmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD
+...
+bml6YXRpb252YWxzaGEyZzIuY3JsMIGgBggrBgEFBQcBAQSBkzCBkDBNBggrBgEF
+BQcwAoZBaHR0cDovL3NlY3VyZS5nbG9iYWxzaWduLmNvbS9jYWNlcnQvZ3Nvcmdh
+z3P668YfhUbKdRF6S42Cg6zn
+-----END PRIVATE KEY-----
 ```
 
 O `s3` deverá receber a `role` que será passada para o Vault gerar as credenciais para acessar o bucket.

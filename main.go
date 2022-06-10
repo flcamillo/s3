@@ -31,6 +31,8 @@ var (
 	s3client *s3.Client
 	// define o gerador de numeros aleatórios
 	random = rand.New(rand.NewSource(time.Now().UnixNano()))
+	// indica se deve realizar o debug de informações importantes
+	debug = false
 )
 
 const (
@@ -163,6 +165,11 @@ func loadCredentials(role string) error {
 		if err != nil {
 			return err
 		}
+		if debug {
+			log.Printf("vault login successfully, token {%s}", vault.Token)
+		} else {
+			log.Printf("vault login successfully")
+		}
 	case VaultAuthByAppRole:
 		if myConfig.VaultAuthRoleId == "" {
 			return fmt.Errorf("vault autentication role id not provided")
@@ -173,6 +180,11 @@ func loadCredentials(role string) error {
 		err := vault.AuthByAppRole(myConfig.VaultAuthAppRolePath, myConfig.VaultAuthRoleId, myConfig.VaultAuthSecretId)
 		if err != nil {
 			return err
+		}
+		if debug {
+			log.Printf("vault login successfully, token {%s}", vault.Token)
+		} else {
+			log.Printf("vault login successfully")
 		}
 	default:
 		if myConfig.VaultAuthToken == "" {
@@ -410,6 +422,11 @@ func processGet(args []string) {
 	pRole := cmdGet.String("r", "", "vault role name to access bucket")
 	// parametros adicionais
 	pBucketPrefix := cmdGet.String("bp", "", "bucket prefix (sub folder)")
+	pDebug := cmdGet.Bool("debug", false, "show additional information for debug")
+	// define o modo de debug
+	if *pDebug {
+		debug = true
+	}
 	// processa os parametros
 	err := cmdGet.Parse(args)
 	if err != nil || len(args) == 0 {
@@ -496,6 +513,11 @@ func processPut(args []string) {
 	pRole := cmdPut.String("r", "", "vault role name to access bucket")
 	// parametros adicionais
 	pBucketPrefix := cmdPut.String("bp", "", "bucket prefix (sub folder)")
+	pDebug := cmdPut.Bool("debug", false, "show additional information for debug")
+	// define o modo de debug
+	if *pDebug {
+		debug = true
+	}
 	// processa os parametros
 	err := cmdPut.Parse(args)
 	if err != nil || len(args) == 0 {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"strings"
 	"time"
 )
@@ -70,6 +71,13 @@ func (p *Vault) AuthByAppRole(path string, roleId string, secretId string) error
 	}
 	// configura os cabecalhos da requisição
 	req.Header.Set("Content-Type", "application/json")
+	// gera o debug da requisição
+	if debug {
+		data, err := httputil.DumpRequest(req, true)
+		if err == nil {
+			fmt.Printf("DEBUG: VAULT AUTH BY APPROLE ==>\n %s", string(data))
+		}
+	}
 	// executa a autenticação
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
@@ -133,6 +141,13 @@ func (p *Vault) AuthByCertificate(path string, cert string, certkey string, cace
 	p.httpClient.Transport = tr
 	// configura os cabecalhos da requisição
 	req.Header.Set("Content-Type", "application/json")
+	// gera o debug da requisição
+	if debug {
+		data, err := httputil.DumpRequest(req, true)
+		if err == nil {
+			fmt.Printf("DEBUG: VAULT AUTH BY CERTIFICATE ==>\n %s", string(data))
+		}
+	}
 	// executa a autenticação
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
@@ -222,6 +237,13 @@ func (p *Vault) Secrets(mount string, secret string, nameSpace string, version s
 	req.Header.Set("X-Vault-Token", p.Token)
 	if nameSpace != "" {
 		req.Header.Set("X-Vault-Namespace", nameSpace)
+	}
+	// gera o debug da requisição
+	if debug {
+		data, err := httputil.DumpRequest(req, true)
+		if err == nil {
+			fmt.Printf("DEBUG: VAULT REQUEST SECRET ==>\n %s", string(data))
+		}
 	}
 	// solicita o segredo
 	resp, err := p.httpClient.Do(req)

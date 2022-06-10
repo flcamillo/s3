@@ -423,15 +423,15 @@ func processGet(args []string) {
 	// parametros adicionais
 	pBucketPrefix := cmdGet.String("bp", "", "bucket prefix (sub folder)")
 	pDebug := cmdGet.Bool("debug", false, "show additional information for debug")
-	// define o modo de debug
-	if *pDebug {
-		debug = true
-	}
 	// processa os parametros
 	err := cmdGet.Parse(args)
 	if err != nil || len(args) == 0 {
 		cmdGet.Usage()
 		os.Exit(1)
+	}
+	// define o modo de debug
+	if *pDebug {
+		debug = true
 	}
 	// configura o bucket
 	if *pBucket != "" {
@@ -514,15 +514,15 @@ func processPut(args []string) {
 	// parametros adicionais
 	pBucketPrefix := cmdPut.String("bp", "", "bucket prefix (sub folder)")
 	pDebug := cmdPut.Bool("debug", false, "show additional information for debug")
-	// define o modo de debug
-	if *pDebug {
-		debug = true
-	}
 	// processa os parametros
 	err := cmdPut.Parse(args)
 	if err != nil || len(args) == 0 {
 		cmdPut.Usage()
 		os.Exit(1)
+	}
+	// define o modo de debug
+	if *pDebug {
+		debug = true
 	}
 	// configura o bucket
 	if *pBucket != "" {

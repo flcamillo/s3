@@ -75,7 +75,7 @@ func (p *Vault) AuthByAppRole(path string, roleId string, secretId string) error
 	if debug {
 		data, err := httputil.DumpRequest(req, true)
 		if err == nil {
-			fmt.Printf("DEBUG: VAULT AUTH BY APPROLE ==>\n %s", string(data))
+			fmt.Printf("DEBUG: VAULT AUTH BY APPROLE ==>\n %s\n", string(data))
 		}
 	}
 	// executa a autenticação
@@ -145,7 +145,7 @@ func (p *Vault) AuthByCertificate(path string, cert string, certkey string, cace
 	if debug {
 		data, err := httputil.DumpRequest(req, true)
 		if err == nil {
-			fmt.Printf("DEBUG: VAULT AUTH BY CERTIFICATE ==>\n %s", string(data))
+			fmt.Printf("DEBUG: VAULT AUTH BY CERTIFICATE ==>\n %s\n", string(data))
 		}
 	}
 	// executa a autenticação
@@ -242,7 +242,7 @@ func (p *Vault) Secrets(mount string, secret string, nameSpace string, version s
 	if debug {
 		data, err := httputil.DumpRequest(req, true)
 		if err == nil {
-			fmt.Printf("DEBUG: VAULT REQUEST SECRET ==>\n %s", string(data))
+			fmt.Printf("DEBUG: VAULT REQUEST SECRET ==>\n %s\n", string(data))
 		}
 	}
 	// solicita o segredo

@@ -614,7 +614,7 @@ func configureAWSClient() (err error) {
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
+		ExpectContinueTimeout: 5 * time.Second,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
@@ -661,6 +661,9 @@ func sendFiles(filter string, prefix string, folder string, rename string, remov
 	} else {
 		log.Printf("using default AWS endpoint for bucket {%s}...", myConfig.Bucket)
 	}
+	// ajusta os campos traduzindo as variaveis se utilizadas
+	prefix = parseName("", prefix)
+	filter = parseName("", filter)
 	// lista os arquivos que batem com o filtro
 	matches, err := filepath.Glob(filepath.Join(folder, filter))
 	if err != nil {
@@ -766,6 +769,9 @@ func receiveFiles(filter string, prefix string, folder string, rename string, re
 	} else {
 		log.Printf("using default AWS endpoint for bucket {%s}...", myConfig.Bucket)
 	}
+	// ajusta os campos traduzindo as variaveis se utilizadas
+	prefix = parseName("", prefix)
+	filter = parseName("", filter)
 	// se foi passado wildcard no filto então lista o bucket para selecionar os arquivos
 	if strings.Contains(filter, "*") {
 		// define os parametros de listagem
